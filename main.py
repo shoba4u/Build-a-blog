@@ -24,6 +24,11 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                 autoescape = True)
 
+def get_posts(limit, offset):
+    sql_str = ("SELECT * FROM Blog ORDER BY created DESC LIMIT " + str(limit)
+        + " OFFSET " + str(offset))
+    posts = db.GqlQuery(sql_str)
+    return posts
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -46,18 +51,25 @@ class MainHandler(Handler):
         self.redirect("/blog")
 
 class MainPage(Handler):
-    #Displays latest five blogs
-    def render_main(self, title="", body="", error=""):
-        posts = db.GqlQuery("SELECT * FROM Blog ORDER BY created DESC LIMIT 5")
-        self.render("main.html", title=title, body=body, error=error, posts=posts)
-
     def get(self):
-        self.render_main()
+        Flag = "N"
+        page = self.request.get("page")
+
+        if page == "":
+            page = 1
+        else:
+            page = int(page)
+
+        posts = get_posts(5, (page - 1) * 5)
+
+        if(posts.count(limit = 5, offset=(page*5)) > 0):
+            Flag = "Y"
+        self.render("main.html", posts=posts, error="", Flag=Flag, page=page)
 
 class NewPost(Handler):
     
     def get(self):
-        self.render("newpost.html")
+        self.render("newpost.html", title="", body="", error="")
 
     def post(self):
         title = self.request.get("title")
@@ -75,15 +87,14 @@ class NewPost(Handler):
 
 class ViewPostHandler(webapp2.RequestHandler):
     def get(self, id):
-        blog_post = Blog.get_by_id(int (id) )
+        blog_post = Blog.get_by_id(int(id))
 
         if blog_post:
-             content = ("<h1>" + blog_post.title + "</h1>" + "<p>" + blog_post.body + "</p>")
-             self.response.write(content)
-        else:
-            self.renderError(400)
-            return
+            content = ("<h1>" + blog_post.title + "</h1>" + "<p>" + blog_post.body + "</p>")
+            self.response.write(content)
 
+        #self.render("post.html", blog_post = blog_post)  
+        
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/blog', MainPage),

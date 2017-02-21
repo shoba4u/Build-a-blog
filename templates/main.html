@@ -4,10 +4,19 @@
 <ul>
 {% for post in posts %}
   <div class="post">
-    <a href="/blog/{{post.key().id()}}"><div class="post-title">{{post.title}}</div></a>
+    <div class="post-title"><a href="/blog/{{post.key().id()}}">{{post.title}}</a></div>
     <pre class="post-body">{{post.body}}</pre>
   </div>
 {% endfor %}
 </ul>
 
+<p>
+{% if page > 1 %}
+<a href="/blog?page={{page-1}}">&lt; Prev</a>
+{% endif %}
+{% if Flag == "Y" %}
+<p>&nbsp; &nbsp; &nbsp;<a href="/blog?page={{page + 1}}">Next &gt;</a></p>
+{% endif %}
+</p>
 {% endblock %}
+
